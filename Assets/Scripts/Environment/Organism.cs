@@ -29,6 +29,8 @@ namespace Environment
                     return OrganismType.STAGE3;
                 case "STAGE4":
                     return OrganismType.STAGE4;
+                case "STAGE5":
+                    return OrganismType.STAGE5;
                 default:
                     return OrganismType.PLANT;
             }
