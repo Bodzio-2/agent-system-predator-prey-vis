@@ -9,6 +9,8 @@ using UI;
 
 public class SimulationHandler : MonoBehaviour
 {
+    public static SimulationHandler Instance { get; private set; }
+
     public GameObject gridElementPrefab;
     private List<List<GridElementRenderer>> gridElementRenderers = new();
 
@@ -19,17 +21,31 @@ public class SimulationHandler : MonoBehaviour
     private AnimalStatsPanel statsPanel;
 
     [SerializeField]
+    private SimTimelineUI simTimelineUI;
+
+    [SerializeField]
     private TextMeshProUGUI simStepText;
 
     float timer = 0.0f;
     public float syncDelay = 1.0f;
 
+
+    bool isPlaying = true;
     bool initialSetup = true;
 
     int dataIndex = 0;
     List<string> allData = new();
 
     SocketClient client;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+            Destroy(gameObject);
+        else
+            Instance = this;
+    }
+
     void Start()
     {
         client = new SocketClient();
@@ -49,8 +65,9 @@ public class SimulationHandler : MonoBehaviour
 
     private void Update()
     {
-        if (Time.time > timer && dataIndex < allData.Count)
+        if (Time.time > timer && dataIndex < allData.Count && isPlaying)
         {
+            simTimelineUI.SetIndex(dataIndex);
             UpdateVisuals();
             timer = Time.time + syncDelay;
             if(simStepText)
@@ -61,13 +78,39 @@ public class SimulationHandler : MonoBehaviour
         if (dataIndex >= allData.Count && !initialSetup)
         {
             Debug.Log("END OF SIMULATION");
-            initialSetup = true;
+            isPlaying = false;
         }
 
         //if (Input.GetKeyDown("q"))
         //    client.ShutdownConnection();
     }
 
+
+    public void PlayPauseSim()
+    {
+        isPlaying = !isPlaying;
+    }
+
+    public bool GetPlaying()
+    {
+        return isPlaying;
+    }
+
+    public void SetSimSpeed(float simSpeed)
+    {
+        syncDelay = 1 / simSpeed;
+    }
+
+    public void SelectTimestamp(int timeIndex)
+    {
+        if(allData.Count > timeIndex && timeIndex >= 0)
+        {
+            dataIndex = timeIndex;
+            if (simStepText)
+                simStepText.text = (dataIndex + 1).ToString();
+            UpdateVisuals();
+        }
+    }
 
     private void UpdateVisuals()
     {

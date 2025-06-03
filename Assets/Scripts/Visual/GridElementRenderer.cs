@@ -33,7 +33,22 @@ public class GridElementRenderer : MonoBehaviour
     float zSpawnLimit = 0f;
 
 
-    private List<GameObject> organisms = new();
+    //private List<GameObject> organisms = new();
+
+    List<List<GameObject>> cellOrganisms = new();
+    //Dictionary<Organism.OrganismType, int> organismTypeToIndex = new();
+
+    private void Start()
+    {
+        //organismTypeToIndex.Add(Organism.OrganismType.PLANT, 0);
+        //organismTypeToIndex.Add(Organism.OrganismType.STAGE2, 1);
+        //organismTypeToIndex.Add(Organism.OrganismType.STAGE3, 2);
+        //organismTypeToIndex.Add(Organism.OrganismType.STAGE4, 3);
+        //organismTypeToIndex.Add(Organism.OrganismType.STAGE5, 4);
+
+        for (int i = 0; i < 5; i++)
+            cellOrganisms.Add(new());
+    }
 
     private Material GetGridMaterial(GridElement.TerrainType terrainType)
     {
@@ -54,40 +69,71 @@ public class GridElementRenderer : MonoBehaviour
     {
         GetComponent<Renderer>().material = GetGridMaterial(gridElement.GetTerrainType());
 
-        // Destroy previous & spawn all the animals and plants
-        foreach (GameObject _gameObject in organisms)
-            Destroy(_gameObject);
+
+        //// Destroy previous & spawn all the animals and plants
+        //foreach (GameObject _gameObject in organisms)
+        //    Destroy(_gameObject);
+
+        int[] tempChange = new int[5];
+        
 
         foreach(Organism organism in gridElement.organisms)
+            tempChange[((int)organism.GetOrganismType())]++;
+
+        for(int i=0; i<cellOrganisms.Count; i++)
+            tempChange[i] -= cellOrganisms[i].Count;
+
+        for (int i= 0; i < cellOrganisms.Count; i++)
         {
             GameObject toSpawn = null;
-            switch (organism.GetOrganismType())
+
+            switch (i)
             {
-                case Organism.OrganismType.PLANT:
+                case 0:
                     toSpawn = treePrefabs[Random.Range(0, treePrefabs.Count)];
                     break;
-                case Organism.OrganismType.STAGE2:
+                case 1:
                     toSpawn = stage2Prefab;
                     break;
-                case Organism.OrganismType.STAGE3:
+                case 2:
                     toSpawn = stage3Prefab;
                     break;
-                case Organism.OrganismType.STAGE4:
+                case 3:
                     toSpawn = stage4Prefab;
                     break;
-                case Organism.OrganismType.STAGE5:
+                case 4:
                     toSpawn = stage5Prefab;
                     break;
                 default:
                     break;
             }
 
-            if(toSpawn != null)
+
+            if (tempChange[i] > 0)
             {
-                GameObject newOrganism = Instantiate(toSpawn, gameObject.transform);
-                newOrganism.transform.localPosition = new Vector3(Random.Range(-xSpawnLimit, xSpawnLimit), newOrganism.transform.localPosition.y, Random.Range(-zSpawnLimit, zSpawnLimit));
-                newOrganism.transform.Rotate(new Vector3(newOrganism.transform.rotation.x, Random.Range(0f, 180f), newOrganism.transform.rotation.z));
-                organisms.Add(newOrganism);
+                // Add organisms to list
+                for (int j = 0; j < tempChange[i]; j++)
+                {
+
+                    if (toSpawn != null)
+                    {
+                        GameObject newOrganism = Instantiate(toSpawn, gameObject.transform);
+                        newOrganism.transform.localPosition = new Vector3(Random.Range(-xSpawnLimit, xSpawnLimit), newOrganism.transform.localPosition.y, Random.Range(-zSpawnLimit, zSpawnLimit));
+                        newOrganism.transform.Rotate(new Vector3(newOrganism.transform.rotation.x, Random.Range(0f, 180f), newOrganism.transform.rotation.z));
+                        //organisms.Add(newOrganism);
+                        cellOrganisms[i].Add(newOrganism);
+                    }
+                }
+            }else if(tempChange[i] < 0)
+            {
+                // Delete organisms from list
+                int temp = -tempChange[i];
+                for(int j=0; j<temp; j++)
+                {
+                    GameObject _gameObject = cellOrganisms[i][cellOrganisms[i].Count - 1];
+                    cellOrganisms[i].RemoveAt(cellOrganisms[i].Count - 1);
+                    Destroy(_gameObject);
+                }
             }
         }
     }
